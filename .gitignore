@@ -1,3 +1,4 @@
 addons/*
 !addons/godot-easy-icons
+addons/godot-easy-icons/generated/
 !.gitkeep

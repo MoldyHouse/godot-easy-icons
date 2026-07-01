@@ -1,21 +1,14 @@
 @tool
 extends EditorPlugin
 
-const SceneContextMenu := preload("res://addons/godot-easy-icons/scene_context_menu.gd")
-const IconPickerDialog := preload("res://addons/godot-easy-icons/icon_picker_dialog.gd")
-const SvgColorizer := preload("res://addons/godot-easy-icons/svg_colorizer.gd")
+const Config := preload("res://addons/godot-easy-icons/config/config.gd")
+const SceneContextMenu := preload("res://addons/godot-easy-icons/context/scene_context_menu.gd")
+const IconPickerDialog := preload("res://addons/godot-easy-icons/ui/icon_picker_dialog.gd")
+const SvgColorizer := preload("res://addons/godot-easy-icons/services/svg_colorizer.gd")
+const ScriptIconService := preload("res://addons/godot-easy-icons/services/script_icon_service.gd")
+const ThemeService := preload("res://addons/godot-easy-icons/services/theme_service.gd")
+const FileSystemService := preload("res://addons/godot-easy-icons/services/filesystem_service.gd")
 const SETTINGS_FILE := "user://godot_easy_icons_settings.cfg"
-const GENERATED_SCRIPT_DIR := "res://addons/godot-easy-icons/generated_scripts"
-# IMPORTANT
-# About WAITING_TIME
-# As the theme_changed signal changed when select but doesn't have another signal
-# for when the theme finalized changing, I had to create this work around to make
-# it work as intended without major problems.
-# IN CASE your computer takes more time to refresh the theme than 2s and the colors doesn't update
-# it means that the plugin updated before the `base_color` inside the theme changed
-# In order to fix eventual problem due to your hardware, simple increase this value
-# until it's good for you. In my case, 1.5 is perfect but I decided to put 2.0 for safety rule.
-const WAITING_TIME := 2.0
 
 var _scene_context_menu: EditorContextMenuPlugin
 var _icon_picker: AcceptDialog
@@ -27,13 +20,16 @@ var _pending_attach_script := false
 var _ask_before_attach := true
 var _last_theme_signature := ""
 var _theme_rebuild_queued := false
+var _project_folder_dialog: EditorFileDialog
+var _pending_project_icon_data := { }
+var _project_icon_dir := Config.DEFAULT_PROJECT_ICON_DIR
 
 
 func _enter_tree() -> void:
 	_load_settings()
 	_create_static_dialogs()
 
-	_last_theme_signature = _get_theme_signature()
+	_last_theme_signature = ThemeService.get_signature()
 
 	var editor_settings := EditorInterface.get_editor_settings()
 	if editor_settings != null and not editor_settings.settings_changed.is_connected(_on_editor_settings_changed):
@@ -46,16 +42,21 @@ func _enter_tree() -> void:
 		EditorContextMenuPlugin.CONTEXT_SLOT_SCENE_TREE,
 		_scene_context_menu,
 	)
+
 	add_tool_menu_item("Godot Easy Icons Browser", _open_icon_browser)
+	add_tool_menu_item("Godot Easy Icons: Change Project Icon Folder", _change_project_icon_folder)
 	set_process_shortcut_input(true)
+
 	print("Godot Easy Icons enabled.")
-	#_test_csharp_icon_builder()
 
 
 func _exit_tree() -> void:
 	var editor_settings := EditorInterface.get_editor_settings()
 	if editor_settings != null and editor_settings.settings_changed.is_connected(_on_editor_settings_changed):
 		editor_settings.settings_changed.disconnect(_on_editor_settings_changed)
+
+	remove_tool_menu_item("Godot Easy Icons Browser")
+	set_process_shortcut_input(false)
 
 	if _scene_context_menu != null:
 		remove_context_menu_plugin(_scene_context_menu)
@@ -69,7 +70,12 @@ func _exit_tree() -> void:
 	_confirm_attach_dialog = null
 	_alert_dialog = null
 	_pending_node = null
-	set_process_shortcut_input(false)
+	_free_window(_project_folder_dialog)
+	_project_folder_dialog = null
+
+	remove_tool_menu_item("Godot Easy Icons Browser")
+	remove_tool_menu_item("Godot Easy Icons: Change Project Icon Folder")
+
 	print("Godot Easy Icons disabled.")
 
 
@@ -100,15 +106,21 @@ func handle_add_icon_from_scene_nodes(selected_nodes: Array) -> void:
 
 		return
 
-	if not _is_supported_script(script):
+	if not ScriptIconService.is_supported_script(script):
 		_show_alert("Only GDScript and C# scripts are supported.")
 		return
 
 	if String(script.resource_path).is_empty():
-		_show_alert("This node has a built-in script. Save it as an external .gd file first.")
+		_show_alert("This node has a built-in script. Save it as an external file first.")
 		return
 
 	_open_icon_picker(node, false)
+
+
+func _change_project_icon_folder() -> void:
+	_pending_project_icon_data.clear()
+	_project_folder_dialog.current_dir = _project_icon_dir if not _project_icon_dir.is_empty() else "res://"
+	_project_folder_dialog.popup_centered_ratio(0.5)
 
 
 func _shortcut_input(event: InputEvent) -> void:
@@ -131,34 +143,6 @@ func _shortcut_input(event: InputEvent) -> void:
 
 	get_viewport().set_input_as_handled()
 	handle_add_icon_from_scene_nodes(selected_nodes)
-
-
-# Using this to text if C# update is running okay even when you don't have it
-# Add to _entry_tree for a quick test and tweak the input as much as you want.
-func _test_csharp_icon_builder() -> void:
-	var input := """using Godot;
-
-[GlobalClass, Icon("res://old.svg")] // This should be replaced
-public partial class MyNode : Node
-{
-	something inside here // This should not be touched
-}
-"""
-
-	var output := _build_csharp_code_with_icon(
-		input,
-		"res://addons/godot-easy-icons/in_use/bunny_node.svg",
-	)
-
-	print(output)
-
-
-func _is_supported_script(script: Script) -> bool:
-	if script is GDScript:
-		return true
-
-	# Avoid hard dependency errors if C# support is not available.
-	return script.get_class() == "CSharpScript"
 
 
 func _on_attach_confirmed() -> void:
@@ -186,7 +170,17 @@ func _open_icon_picker(node: Node, should_attach_script: bool) -> void:
 	_pending_node = node
 	_pending_attach_script = should_attach_script
 
-	picker.open_for_node(node, should_attach_script, _is_light_editor_theme())
+	picker.open_for_node(node, should_attach_script, ThemeService.is_light())
+	picker.popup_centered_clamped(Vector2i(760, 560), 0.85)
+
+
+func _open_icon_browser() -> void:
+	var picker := _get_icon_picker()
+
+	if picker == null:
+		return
+
+	picker.open_browser(ThemeService.is_light())
 	picker.popup_centered_clamped(Vector2i(760, 560), 0.85)
 
 
@@ -197,19 +191,10 @@ func _get_icon_picker() -> AcceptDialog:
 	_icon_picker = IconPickerDialog.new()
 	_icon_picker.icon_chosen.connect(_on_icon_chosen)
 	_icon_picker.reveal_in_filesystem_requested.connect(_on_reveal_in_filesystem_requested)
+	_icon_picker.add_to_project_requested.connect(_on_add_to_project_requested)
 	add_child(_icon_picker)
 
 	return _icon_picker
-
-
-func _open_icon_browser() -> void:
-	var picker := _get_icon_picker()
-
-	if picker == null:
-		return
-
-	picker.open_browser(_is_light_editor_theme())
-	picker.popup_centered_clamped(Vector2i(760, 560), 0.85)
 
 
 func _on_reveal_in_filesystem_requested(path: String) -> void:
@@ -219,6 +204,74 @@ func _on_reveal_in_filesystem_requested(path: String) -> void:
 		return
 
 	dock.navigate_to_path(path)
+
+
+func _on_add_to_project_requested(
+		icon_source_path: String,
+		role: String,
+		custom_color: Color,
+		use_custom_color: bool,
+) -> void:
+	_pending_project_icon_data = {
+		"icon_source_path": icon_source_path,
+		"role": role,
+		"custom_color": custom_color,
+		"use_custom_color": use_custom_color,
+	}
+
+	if _project_icon_dir.is_empty() or _project_icon_dir == Config.DEFAULT_PROJECT_ICON_DIR:
+		_project_folder_dialog.current_dir = "res://"
+		_project_folder_dialog.popup_centered_ratio(0.5)
+		return
+
+	_add_pending_icon_to_project()
+
+
+func _on_project_icon_folder_selected(path: String) -> void:
+	_project_icon_dir = path
+	_save_settings()
+	_add_pending_icon_to_project()
+
+
+func _add_pending_icon_to_project() -> void:
+	if _pending_project_icon_data.is_empty():
+		return
+
+	var icon_source_path := String(_pending_project_icon_data["icon_source_path"])
+	var role := String(_pending_project_icon_data["role"])
+	var custom_color := _pending_project_icon_data["custom_color"] as Color
+	var use_custom_color := bool(_pending_project_icon_data["use_custom_color"])
+
+	var target_path := FileSystemService.get_project_icon_path(
+		_project_icon_dir,
+		icon_source_path,
+		role,
+		custom_color,
+		use_custom_color,
+	)
+
+	FileSystemService.ensure_dir(target_path.get_base_dir())
+
+	var generated_path := SvgColorizer.create_or_reuse_svg(
+		icon_source_path,
+		role,
+		custom_color,
+		use_custom_color,
+		ThemeService.is_light(),
+		target_path,
+	)
+
+	_pending_project_icon_data.clear()
+
+	if generated_path.is_empty():
+		_show_alert("Could not add icon to project.")
+		return
+
+	var editor_fs := EditorInterface.get_resource_filesystem()
+	editor_fs.update_file(generated_path)
+	editor_fs.scan()
+
+	FileSystemService.reveal(generated_path)
 
 
 func _on_icon_chosen(
@@ -240,7 +293,7 @@ func _on_icon_chosen(
 		role,
 		custom_color,
 		use_custom_color,
-		_is_light_editor_theme(),
+		ThemeService.is_light(),
 	)
 
 	if icon_path.is_empty():
@@ -250,31 +303,35 @@ func _on_icon_chosen(
 	var script_path := ""
 
 	if should_attach:
-		script_path = _create_script_for_node(node, icon_path)
+		script_path = ScriptIconService.create_script_for_node(node, icon_path)
+
 		if script_path.is_empty():
 			_show_alert("Could not create and attach a script.")
 			return
 
-		await _attach_script_to_node(node, script_path)
+		await ScriptIconService.attach_script_to_node(node, script_path)
 	else:
-		var script := node.get_script() as GDScript
+		var script := node.get_script() as Script
+
 		if script == null:
-			_show_alert("The selected node no longer has a valid GDScript.")
+			_show_alert("The selected node no longer has a valid script.")
 			return
 
 		script_path = script.resource_path
+
 		if script_path.is_empty():
 			_show_alert("This script has no file path.")
 			return
 
-		if not _apply_icon_to_script(script, icon_path):
+		if not ScriptIconService.apply_icon_to_script(script, icon_path):
 			_show_alert("Could not write the icon annotation.")
 			return
 
 	_pending_node = null
 	_pending_attach_script = false
 
-	await _finalize_after_icon_apply(script_path, icon_path)
+	_finalize_after_icon_apply(script_path, icon_path)
+	await _reload_current_saved_scene()
 
 	print("Icon applied to node: ", node_name)
 
@@ -303,283 +360,12 @@ func _create_static_dialogs() -> void:
 	_alert_dialog.title = "Godot Easy Icons"
 	add_child(_alert_dialog)
 
-
-func _free_window(window: Window) -> void:
-	if is_instance_valid(window):
-		window.queue_free()
-
-
-func _show_alert(message: String) -> void:
-	if not is_instance_valid(_alert_dialog):
-		return
-
-	_alert_dialog.dialog_text = message
-	_alert_dialog.popup_centered(Vector2i(460, 150))
-
-
-func _create_script_for_node(node: Node, icon_path: String) -> String:
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(GENERATED_SCRIPT_DIR))
-
-	var base_name := String(node.name).to_snake_case()
-	if base_name.is_empty():
-		base_name = "node_script"
-
-	var script_path := _get_unique_script_path(GENERATED_SCRIPT_DIR.path_join(base_name + ".gd"))
-
-	var content := ""
-	content += "@icon(\"%s\")\n" % icon_path
-	content += "extends %s\n\n" % node.get_class()
-
-	var script := GDScript.new()
-	script.source_code = content
-	script.resource_path = script_path
-
-	if ResourceSaver.save(script) != OK:
-		return ""
-
-	script.reload(true)
-
-	return script_path
-
-
-func _get_unique_script_path(base_path: String) -> String:
-	if not FileAccess.file_exists(base_path):
-		return base_path
-
-	var dir := base_path.get_base_dir()
-	var stem := base_path.get_file().get_basename()
-	var ext := base_path.get_extension()
-	var index := 2
-
-	while true:
-		var candidate := dir.path_join("%s_%d.%s" % [stem, index, ext])
-		if not FileAccess.file_exists(candidate):
-			return candidate
-
-		index += 1
-
-	return base_path
-
-
-func _attach_script_to_node(node: Node, script_path: String) -> void:
-	var script := ResourceLoader.load(
-		script_path,
-		"GDScript",
-		ResourceLoader.CACHE_MODE_REPLACE,
-	) as GDScript
-
-	if script == null:
-		return
-
-	script.reload(true)
-	node.set_script(script)
-
-	EditorInterface.get_resource_filesystem().update_file(script_path)
-
-
-func _apply_icon_to_script(script: Script, icon_path: String) -> bool:
-	if script is GDScript:
-		return _apply_icon_to_gdscript(script as GDScript, icon_path)
-
-	if script.get_class() == "CSharpScript":
-		return _apply_icon_to_csharp(script, icon_path)
-
-	return false
-
-
-func _apply_icon_to_gdscript(script: GDScript, icon_path: String) -> bool:
-	var new_code := _build_gdscript_code_with_icon(script.source_code, icon_path)
-
-	script.source_code = new_code
-
-	if ResourceSaver.save(script) != OK:
-		return false
-
-	script.reload(true)
-	_reload_open_code_edit(script, new_code)
-
-	return true
-
-
-func _build_gdscript_code_with_icon(source_code: String, icon_path: String) -> String:
-	var lines := source_code.split("\n", true)
-	var cleaned: Array[String] = []
-
-	for line in lines:
-		if not line.strip_edges().begins_with("@icon("):
-			cleaned.append(line)
-
-	cleaned.insert(_find_icon_insert_index(cleaned), "@icon(\"%s\")" % icon_path)
-
-	return "\n".join(cleaned)
-
-
-func _apply_icon_to_csharp(script: Script, icon_path: String) -> bool:
-	var script_path := script.resource_path
-
-	if script_path.is_empty():
-		return false
-
-	var file := FileAccess.open(script_path, FileAccess.READ)
-	if file == null:
-		return false
-
-	var source_code := file.get_as_text()
-	file.close()
-
-	var new_code := _build_csharp_code_with_icon(source_code, icon_path)
-
-	file = FileAccess.open(script_path, FileAccess.WRITE)
-	if file == null:
-		return false
-
-	file.store_string(new_code)
-	file.flush()
-	file.close()
-
-	var editor_fs := EditorInterface.get_resource_filesystem()
-	editor_fs.update_file(script_path)
-	editor_fs.scan()
-
-	_reload_open_code_edit(script, new_code)
-
-	return true
-
-
-func _build_csharp_code_with_icon(source_code: String, icon_path: String) -> String:
-	var code := source_code
-
-	# Remove standalone [Icon("...")] lines.
-	code = _regex_sub(
-		code,
-		"(?m)^\\s*\\[\\s*Icon\\s*\\(\\s*@?\"[^\"]*\"\\s*\\)\\s*\\]\\s*\\n?",
-		"",
-	)
-
-	# Remove Icon("...") from combined attribute lists.
-	code = _regex_sub(
-		code,
-		"\\s*,\\s*Icon\\s*\\(\\s*@?\"[^\"]*\"\\s*\\)",
-		"",
-	)
-
-	code = _regex_sub(
-		code,
-		"Icon\\s*\\(\\s*@?\"[^\"]*\"\\s*\\)\\s*,\\s*",
-		"",
-	)
-
-	var icon_attribute := "Icon(\"%s\")" % icon_path
-
-	# If [GlobalClass] exists, prefer [GlobalClass, Icon("...")].
-	var global_class_regex := RegEx.new()
-	global_class_regex.compile("\\[([^\\]]*\\bGlobalClass\\b[^\\]]*)\\]")
-
-	var match_text := global_class_regex.search(code)
-
-	if match_text != null:
-		var existing_attrs := match_text.get_string(1).strip_edges()
-		var replacement := "[%s, %s]" % [existing_attrs, icon_attribute]
-		return global_class_regex.sub(code, replacement, false)
-
-	# Otherwise insert [Icon("...")] before the class declaration.
-	var class_regex := RegEx.new()
-	class_regex.compile("(?m)^\\s*public\\s+partial\\s+class\\s+")
-
-	match_text = class_regex.search(code)
-
-	if match_text == null:
-		return code
-
-	var insert_at := match_text.get_start()
-	return code.substr(0, insert_at) + "[%s]\n" % icon_attribute + code.substr(insert_at)
-
-
-func _regex_sub(text: String, pattern: String, replacement: String) -> String:
-	var regex := RegEx.new()
-
-	if regex.compile(pattern) != OK:
-		return text
-
-	return regex.sub(text, replacement, true)
-
-
-func _build_code_with_icon(source_code: String, icon_path: String) -> String:
-	var lines := source_code.split("\n", true)
-	var cleaned: Array[String] = []
-
-	for line in lines:
-		if not line.strip_edges().begins_with("@icon("):
-			cleaned.append(line)
-
-	cleaned.insert(_find_icon_insert_index(cleaned), "@icon(\"%s\")" % icon_path)
-
-	return "\n".join(cleaned)
-
-
-func _find_icon_insert_index(lines: Array[String]) -> int:
-	for i in range(lines.size()):
-		var trimmed := lines[i].strip_edges()
-
-		if trimmed.is_empty():
-			continue
-
-		if trimmed == "@tool":
-			return i + 1
-
-		return i
-
-	return 0
-
-
-func _reload_open_code_edit(script: Script, new_code: String) -> void:
-	var script_editor := EditorInterface.get_script_editor()
-	if script_editor == null:
-		return
-
-	var open_scripts := script_editor.get_open_scripts()
-	if not open_scripts.has(script):
-		return
-
-	var open_editors := script_editor.get_open_script_editors()
-
-	if script_editor.get_current_script() == script:
-		_reload_code_edit(script_editor.get_current_editor().get_base_editor(), new_code, true)
-		return
-
-	if open_scripts.size() != open_editors.size():
-		return
-
-	for i in range(open_scripts.size()):
-		if open_scripts[i] == script:
-			_reload_code_edit(open_editors[i].get_base_editor(), new_code, true)
-			return
-
-
-func _reload_code_edit(code_edit: CodeEdit, new_text: String, tag_saved := false) -> void:
-	if code_edit == null:
-		return
-
-	var caret_line := code_edit.get_caret_line()
-	var caret_column := code_edit.get_caret_column()
-	var scroll_horizontal := code_edit.scroll_horizontal
-	var scroll_vertical := code_edit.scroll_vertical
-
-	code_edit.text = new_text
-
-	if tag_saved:
-		code_edit.tag_saved_version()
-
-	var line_count := code_edit.get_line_count()
-	code_edit.set_caret_line(clamp(caret_line, 0, max(0, line_count - 1)))
-
-	var max_column := code_edit.get_line(code_edit.get_caret_line()).length()
-	code_edit.set_caret_column(clamp(caret_column, 0, max_column))
-
-	code_edit.scroll_horizontal = scroll_horizontal
-	code_edit.scroll_vertical = scroll_vertical
-	code_edit.update_minimum_size()
-	code_edit.text_changed.emit()
+	#_project_folder_dialog = EditorFileDialog.new()
+	#_project_folder_dialog.title = "Choose Project Icon Folder"
+	#_project_folder_dialog.file_mode = EditorFileDialog.FILE_MODE_OPEN_DIR
+	#_project_folder_dialog.access = EditorFileDialog.ACCESS_RESOURCES
+	#_project_folder_dialog.dir_selected.connect(_on_project_icon_folder_selected)
+	#add_child(_project_folder_dialog)
 
 
 func _finalize_after_icon_apply(script_path: String, icon_path: String) -> void:
@@ -589,16 +375,16 @@ func _finalize_after_icon_apply(script_path: String, icon_path: String) -> void:
 	editor_fs.update_file(script_path)
 	editor_fs.scan()
 
-	await _reload_current_saved_scene()
-
 
 func _reload_current_saved_scene() -> void:
 	var root := EditorInterface.get_edited_scene_root()
+
 	if root == null:
 		_show_alert("Icon applied, but no edited scene was found to reload.")
 		return
 
 	var scene_path := root.scene_file_path
+
 	if scene_path.is_empty():
 		_show_alert("Icon applied, but the current scene must be saved before it can be reloaded.")
 		return
@@ -620,11 +406,12 @@ func _on_editor_settings_changed() -> void:
 
 
 func _check_theme_change_after_delay() -> void:
-	await get_tree().create_timer(WAITING_TIME).timeout
+	await get_tree().create_timer(Config.WAITING_TIME).timeout
 
 	_theme_rebuild_queued = false
 
-	var new_signature := _get_theme_signature()
+	var new_signature := ThemeService.get_signature()
+
 	if new_signature == _last_theme_signature:
 		return
 
@@ -634,7 +421,8 @@ func _check_theme_change_after_delay() -> void:
 
 
 func _rebuild_theme_icons_after_theme_change() -> void:
-	var changed_files := SvgColorizer.rebuild_theme_managed_icons(_is_light_editor_theme())
+	var changed_files := SvgColorizer.rebuild_theme_managed_icons(ThemeService.is_light())
+
 	if changed_files.is_empty():
 		return
 
@@ -649,6 +437,7 @@ func _rebuild_theme_icons_after_theme_change() -> void:
 	await _wait_for_editor_filesystem_idle()
 
 	var root := EditorInterface.get_edited_scene_root()
+
 	if root == null or root.scene_file_path.is_empty():
 		return
 
@@ -657,6 +446,7 @@ func _rebuild_theme_icons_after_theme_change() -> void:
 
 func _wait_for_editor_filesystem_idle() -> void:
 	var editor_fs := EditorInterface.get_resource_filesystem()
+
 	if editor_fs == null:
 		return
 
@@ -664,48 +454,35 @@ func _wait_for_editor_filesystem_idle() -> void:
 		await get_tree().process_frame
 
 
-func _is_light_editor_theme() -> bool:
-	var settings := EditorInterface.get_editor_settings()
-	if settings == null:
-		return false
-
-	var base_color := Color.BLACK
-
-	if settings.has_setting("interface/theme/base_color"):
-		base_color = settings.get_setting("interface/theme/base_color")
-
-	var luminance := 0.2126 * base_color.r + 0.7152 * base_color.g + 0.0722 * base_color.b
-	return luminance > 0.5
+func _free_window(window: Window) -> void:
+	if is_instance_valid(window):
+		window.queue_free()
 
 
-func _get_theme_signature() -> String:
-	var settings := EditorInterface.get_editor_settings()
-	if settings == null:
-		return ""
+func _show_alert(message: String) -> void:
+	if not is_instance_valid(_alert_dialog):
+		return
 
-	var base_color := Color.BLACK
-	var preset := ""
-
-	if settings.has_setting("interface/theme/base_color"):
-		base_color = settings.get_setting("interface/theme/base_color")
-
-	if settings.has_setting("interface/theme/preset"):
-		preset = String(settings.get_setting("interface/theme/preset"))
-
-	return "%s|%s" % [preset, base_color.to_html(false)]
+	_alert_dialog.dialog_text = message
+	_alert_dialog.popup_centered(Vector2i(460, 150))
 
 
 func _load_settings() -> void:
 	var config := ConfigFile.new()
 
-	if config.load(SETTINGS_FILE) != OK:
+	if config.load(Config.SETTINGS_FILE) != OK:
 		_ask_before_attach = true
+		_project_icon_dir = Config.DEFAULT_PROJECT_ICON_DIR
 		return
 
 	_ask_before_attach = bool(config.get_value("behavior", "ask_before_attach", true))
+	_project_icon_dir = String(config.get_value("paths", "project_icon_dir", Config.DEFAULT_PROJECT_ICON_DIR))
 
 
 func _save_settings() -> void:
 	var config := ConfigFile.new()
+
 	config.set_value("behavior", "ask_before_attach", _ask_before_attach)
-	config.save(SETTINGS_FILE)
+	config.set_value("paths", "project_icon_dir", _project_icon_dir)
+
+	config.save(Config.SETTINGS_FILE)

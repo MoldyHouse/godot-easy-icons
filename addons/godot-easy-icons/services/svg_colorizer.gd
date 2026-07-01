@@ -1,10 +1,7 @@
 @tool
 extends RefCounted
 
-const IconRoles := preload("res://addons/godot-easy-icons/icon_roles.gd")
-const SOURCE_ICON_DIR := "res://addons/godot-easy-icons/icons"
-const IN_USE_DIR := "res://addons/godot-easy-icons/node_icons"
-const MANIFEST_PATH := "res://addons/godot-easy-icons/node_icons/manifest.cfg"
+const Config := preload("res://addons/godot-easy-icons/config/config.gd")
 
 
 static func create_or_reuse_svg(
@@ -13,18 +10,19 @@ static func create_or_reuse_svg(
 		custom_color: Color,
 		use_custom_color: bool,
 		is_light_theme: bool,
+		target_path := "",
 ) -> String:
 	if use_custom_color:
-		return _create_custom(source_svg_path, custom_color)
+		return _create_custom(source_svg_path, custom_color, target_path)
 
-	return _create_semantic(source_svg_path, role, is_light_theme)
+	return _create_semantic(source_svg_path, role, is_light_theme, target_path)
 
 
 static func rebuild_theme_managed_icons(is_light_theme: bool) -> Array[String]:
 	var changed: Array[String] = []
 	var config := ConfigFile.new()
 
-	if config.load(MANIFEST_PATH) != OK:
+	if config.load(Config.NODES_MANIFEST_PATH) != OK:
 		return changed
 
 	for target_path in config.get_sections():
@@ -32,25 +30,33 @@ static func rebuild_theme_managed_icons(is_light_theme: bool) -> Array[String]:
 			continue
 
 		var source_path := String(config.get_value(target_path, "source", ""))
-		var role := String(config.get_value(target_path, "role", IconRoles.NODE))
+		var role := String(config.get_value(target_path, "role", Config.NODE))
 
 		if not FileAccess.file_exists(source_path):
 			continue
 
-		if _write_recolored_svg(source_path, target_path, IconRoles.color(role, is_light_theme)):
+		if _write_recolored_svg(source_path, target_path, Config.color(role, is_light_theme)):
 			changed.append(target_path)
 
 	return changed
 
 
-static func _create_semantic(source_path: String, role: String, is_light_theme: bool) -> String:
-	if not _can_use_source(source_path) or not IconRoles.is_semantic(role):
+static func _create_semantic(
+		source_path: String,
+		role: String,
+		is_light_theme: bool,
+		target_path := "",
+) -> String:
+	if not _can_use_source(source_path) or not Config.is_semantic(role):
 		return ""
 
 	_ensure_dir()
 
-	var target_path := IN_USE_DIR.path_join("%s_%s.svg" % [_safe_name(source_path), role])
-	var color := IconRoles.color(role, is_light_theme)
+	if target_path.is_empty():
+		target_path = Config.GENERATED_ICONS_DIR.path_join(
+			"%s_%s.svg" % [_safe_name(source_path), role],
+		)
+	var color := Config.color(role, is_light_theme)
 
 	if not _write_recolored_svg(source_path, target_path, color):
 		return ""
@@ -59,20 +65,20 @@ static func _create_semantic(source_path: String, role: String, is_light_theme: 
 	return target_path
 
 
-static func _create_custom(source_path: String, color: Color) -> String:
+static func _create_custom(source_path: String, color: Color, target_path := "") -> String:
 	if not _can_use_source(source_path):
 		return ""
 
 	_ensure_dir()
 
 	var hex := color.to_html(false)
-	var target_path := IN_USE_DIR.path_join("%s_custom_%s.svg" % [_safe_name(source_path), hex])
-
+	if target_path.is_empty():
+		target_path = Config.GENERATED_ICONS_DIR.path_join("%s_custom_%s.svg" % [_safe_name(source_path), hex])
 	if not FileAccess.file_exists(target_path):
 		if not _write_recolored_svg(source_path, target_path, color):
 			return ""
 
-	_save_manifest(target_path, source_path, IconRoles.CUSTOM, hex, false)
+	_save_manifest(target_path, source_path, Config.CUSTOM, hex, false)
 	return target_path
 
 
@@ -81,11 +87,11 @@ static func _can_use_source(path: String) -> bool:
 
 
 static func _ensure_dir() -> void:
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(IN_USE_DIR))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(Config.GENERATED_ICONS_DIR))
 
 
 static func _safe_name(source_path: String) -> String:
-	var name := source_path.trim_prefix(SOURCE_ICON_DIR).trim_prefix("/").get_basename()
+	var name := source_path.trim_prefix(Config.ICONS_DIR).trim_prefix("/").get_basename()
 	return name.replace("/", "__").replace("\\", "__").replace("-", "_").replace(" ", "_").to_snake_case()
 
 
@@ -143,11 +149,11 @@ static func _save_manifest(
 		theme_managed: bool,
 ) -> void:
 	var config := ConfigFile.new()
-	config.load(MANIFEST_PATH)
+	config.load(Config.NODES_MANIFEST_PATH)
 
 	config.set_value(target_path, "source", source_path)
 	config.set_value(target_path, "role", role)
 	config.set_value(target_path, "custom_hex", custom_hex)
 	config.set_value(target_path, "theme_managed", theme_managed)
 
-	config.save(MANIFEST_PATH)
+	config.save(Config.NODES_MANIFEST_PATH)
