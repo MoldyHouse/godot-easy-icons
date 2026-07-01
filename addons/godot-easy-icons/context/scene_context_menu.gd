@@ -1,7 +1,7 @@
 @tool
 extends EditorContextMenuPlugin
 
-const ADD = preload("res://addons/godot-easy-icons/config/add.svg")
+const ADD = preload("res://addons/godot-easy-icons/config/icons/add.svg")
 
 var shortcut = Shortcut.new()
 var _owner_plugin: EditorPlugin = null
