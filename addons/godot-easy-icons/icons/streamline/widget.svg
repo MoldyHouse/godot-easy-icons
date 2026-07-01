@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Widget--Streamline-Core" height="14" width="14">
+  <desc>
+    Widget Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="widget">
+    <path id="rectangle 629" fill="#ffffff" d="M12.5 9.5c0.5523 0 1 0.44772 1 1l0 2c0 0.5523 -0.4477 1 -1 1l-11 0c-0.552285 0 -1 -0.4477 -1 -1l0 -2c0 -0.55229 0.447715 -1 1 -1l11 0Z" stroke-width="1"></path>
+    <path id="rectangle 634" fill="#ffffff" d="M7 0.5c0.55228 0 1 0.447715 1 1L8 7c0 0.55228 -0.44772 1 -1 1L1.43161 8C0.879326 8 0.431611 7.55228 0.431611 7l0 -5.5c0 -0.552285 0.447715 -1 0.999999 -1L7 0.5Z" stroke-width="1"></path>
+    <path id="rectangle 636" fill="#ffffff" d="M13 4.75c0.2761 0 0.5 0.22386 0.5 0.5l0 2.25c0 0.27614 -0.2239 0.5 -0.5 0.5l-3 0c-0.27614 0 -0.5 -0.22386 -0.5 -0.5l0 -2.25c0 -0.27614 0.22386 -0.5 0.5 -0.5l3 0Z" stroke-width="1"></path>
+    <path id="rectangle 637" fill="#ffffff" d="M13 0.5c0.2761 0 0.5 0.223858 0.5 0.5l0 2.25c0 0.27614 -0.2239 0.5 -0.5 0.5l-3 0c-0.27614 0 -0.5 -0.22386 -0.5 -0.5L9.5 1c0 -0.276142 0.22386 -0.5 0.5 -0.5l3 0Z" stroke-width="1"></path>
+  </g>
+</svg>

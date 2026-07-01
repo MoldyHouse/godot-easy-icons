@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Jump-Object--Streamline-Core" height="14" width="14">
+  <desc>
+    Jump Object Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="jump-object">
+    <path id="Union" fill="#ffffff" fill-rule="evenodd" d="M0 1C0 0.585786 0.335786 0.25 0.75 0.25h12.5c0.4142 0 0.75 0.335786 0.75 0.75 0 0.41421 -0.3358 0.75 -0.75 0.75H0.75C0.335786 1.75 0 1.41421 0 1Zm3.50003 4.00049c0 -0.82843 0.67157 -1.5 1.5 -1.5h4c0.82843 0 1.49997 0.67157 1.49997 1.5v4c0 0.82842 -0.67154 1.50001 -1.49997 1.50001h-4c-0.82843 0 -1.5 -0.67158 -1.5 -1.50001v-4ZM0.75 12.25c-0.414214 0 -0.75 0.3358 -0.75 0.75s0.335786 0.75 0.75 0.75h12.5c0.4142 0 0.75 -0.3358 0.75 -0.75s-0.3358 -0.75 -0.75 -0.75H0.75Z" clip-rule="evenodd" stroke-width="1"></path>
+  </g>
+</svg>
