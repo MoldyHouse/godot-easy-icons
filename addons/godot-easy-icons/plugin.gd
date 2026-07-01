@@ -340,6 +340,7 @@ func _create_static_dialogs() -> void:
 	_confirm_attach_dialog = ConfirmationDialog.new()
 	_confirm_attach_dialog.title = "Attach Script?"
 	_confirm_attach_dialog.confirmed.connect(_on_attach_confirmed)
+	_confirm_attach_dialog.max_size = Vector2(600, 200)
 	add_child(_confirm_attach_dialog)
 
 	var box := VBoxContainer.new()
@@ -358,14 +359,15 @@ func _create_static_dialogs() -> void:
 
 	_alert_dialog = AcceptDialog.new()
 	_alert_dialog.title = "Godot Easy Icons"
+	_alert_dialog.max_size = Vector2(400, 200)
 	add_child(_alert_dialog)
 
-	#_project_folder_dialog = EditorFileDialog.new()
-	#_project_folder_dialog.title = "Choose Project Icon Folder"
-	#_project_folder_dialog.file_mode = EditorFileDialog.FILE_MODE_OPEN_DIR
-	#_project_folder_dialog.access = EditorFileDialog.ACCESS_RESOURCES
-	#_project_folder_dialog.dir_selected.connect(_on_project_icon_folder_selected)
-	#add_child(_project_folder_dialog)
+	_project_folder_dialog = EditorFileDialog.new()
+	_project_folder_dialog.title = "Choose Project Icon Folder"
+	_project_folder_dialog.file_mode = EditorFileDialog.FILE_MODE_OPEN_DIR
+	_project_folder_dialog.access = EditorFileDialog.ACCESS_RESOURCES
+	_project_folder_dialog.dir_selected.connect(_on_project_icon_folder_selected)
+	add_child(_project_folder_dialog)
 
 
 func _finalize_after_icon_apply(script_path: String, icon_path: String) -> void:
@@ -464,7 +466,7 @@ func _show_alert(message: String) -> void:
 		return
 
 	_alert_dialog.dialog_text = message
-	_alert_dialog.popup_centered(Vector2i(460, 150))
+	_alert_dialog.popup_centered(Vector2i(960, 150))
 
 
 func _load_settings() -> void:

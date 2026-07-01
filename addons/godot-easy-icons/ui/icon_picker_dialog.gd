@@ -42,8 +42,6 @@ var _add_to_project_button: Button
 
 
 func _ready() -> void:
-	print_debug(ThemeDB.get_default_theme())
-
 	title = "Add Icon"
 	min_size = Vector2i(760, 560)
 
