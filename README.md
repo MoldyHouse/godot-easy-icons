@@ -1,14 +1,17 @@
 # Godot Easy Icons
 
+
 Adding custom icons to your Godot editor nodes, made easy.
 
 ## Demo
 
 | | |
 | :---: | :---: |
-|  |  |
-|  |  |
+| <img width="100%" alt="screenshot_20260701_190232" src="https://github.com/user-attachments/assets/fa179f46-acba-4200-9e3e-ae379ce2b7be" /> | <img width="100%" alt="screenshot_20260701_190307" src="https://github.com/user-attachments/assets/d5f4d2cb-880d-49c0-9f55-facc32903126" /> |
+| <img width="100%" alt="screenshot_20260701_214913" src="https://github.com/user-attachments/assets/a80fb243-17fb-4156-9d4f-af32bf5279fa" /> | <img width="100%" alt="screenshot_20260701_214128" src="https://github.com/user-attachments/assets/6172afef-7da5-4f00-9370-6222b9480f76" /> |
 
+
+<video src="https://github.com/user-attachments/assets/5b054db7-4ecf-4bf8-82dd-3dcdd739bef2" autoplay loop muted playsinline width="100%"></video>
 
 > **Tip** You can use `F3` and `Ctrl + .` as shortcut.
 
