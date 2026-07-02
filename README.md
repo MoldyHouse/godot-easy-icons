@@ -54,14 +54,14 @@ public partial class MyNode : Node
 }
 ```
 
-# Using Your Own Icons
+## Using Your Own Icons
 
 If you want to use this tool with your own custom asset library, simply clear out the default files in the icons folder and drop your own in.
 
 > Note: For the best results, please use monochromatic icons. The color-shifting feature is tailored for UI elements. If the project gets enough traction, expanding support for multi-colored icons is definitely on the table!
 
 
-# Inspiration
+## Inspiration
 
 This project was heavily inspired by @voxybuns' work on @icons. His approach had a few limitations—which are completely understandable, because making an addon like this is surprisingly tricky. Since Godot's @icon annotation takes a strict static path and doesn't accept dynamic parameters, it creates a massive roadblock for user-friendly customization. This addon is an attempt to solve that problem.
 Contributing & Support
@@ -70,6 +70,6 @@ Contributing & Support
 
     - Support: Check out my other open-source tools and projects at [Mold House](https://github.com/MoldyHouse).
 
-# License
+## License
 
 Godot Easy Icons is licensed under the MIT license. See [LICENSE](./LICENSE) for details.
