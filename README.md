@@ -1,12 +1,11 @@
 # Godot Easy Icons
 
 ## Demo
-<div style="display:flex;">
-<img width="640" alt="screenshot_20260701_190307" src="https://github.com/user-attachments/assets/a6ab7da6-d3f9-44e2-9cb8-ed2cf8b3d590" />
-<img width="427" alt="screenshot_20260701_190232" src="https://github.com/user-attachments/assets/f61a1c88-b6b1-4e38-b403-ab8737c7a18e" />
-<img width="539" alt="screenshot_20260701_214128" src="https://github.com/user-attachments/assets/3a4aa37b-2e9b-437b-9736-99970c2acfd5" />
-<img width="427" alt="screenshot_20260701_214913" src="https://github.com/user-attachments/assets/4b5f32b1-9ed4-4ebd-b07a-699d584130cd" />
-</div>
+
+| | |
+| :---: | :---: |
+| <img src="https://github.com/user-attachments/assets/a6ab7da6-d3f9-44e2-9cb8-ed2cf8b3d590" width="100%" alt="screenshot 1"/> | <img src="https://github.com/user-attachments/assets/f61a1c88-b6b1-4e38-b403-ab8737c7a18e" width="100%" alt="screenshot 2"/> |
+| <img src="https://github.com/user-attachments/assets/3a4aa37b-2e9b-437b-9736-99970c2acfd5" width="100%" alt="screenshot 3"/> | <img src="https://github.com/user-attachments/assets/4b5f32b1-9ed4-4ebd-b07a-699d584130cd" width="100%" alt="screenshot 4"/> |
 
 
 > You can use `F3` and `Ctrl + .` as shortcut.
