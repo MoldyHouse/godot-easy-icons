@@ -21,7 +21,7 @@ The repository includes a few distinct icon packs inside the `/icons` folder:
 *   [Streamline Core](https://www.streamlinehq.com/icons/core-solid-free) by Streamline
 
 ### ⚠️ Performance & Style Note
-I highly recommend deleting the icon packs you don't plan on using. Better for project coherence and keeping them all increases project load times, as the addon recalculates icon colors whenever your Godot editor theme changes. Don't worry about losing them—you can always grab them from this repo later.
+I highly recommend deleting the icon packs you don't plan on using. Better for project coherence and keeping them all increases project load times, as the addon recalculates icon colors whenever your Godot editor theme changes. Don't worry about losing them, you can always grab them from this repo later.
 
 ## Using Your Own Icons
 
