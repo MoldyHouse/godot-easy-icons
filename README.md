@@ -7,7 +7,7 @@ Adding custom icons to your Godot editor nodes, made easy.
 
 ## Installation
 
-*   **Asset Library:** Download it directly via the [Godot Asset Library](https://store.godotengine.org/asset/fellow-roach/godot-easy-icons/).
+*   **Asset Library:** Download it directly via the [Godot Asset Store](https://store.godotengine.org/asset/fellow-roach/godot-easy-icons/).
 *   **Manual:** Clone this repository and drop the `addons/` folder into your project directory.
 
 ---
