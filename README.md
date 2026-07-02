@@ -66,9 +66,9 @@ If you want to use this tool with your own custom asset library, simply clear ou
 This project was heavily inspired by @voxybuns' work on @icons. His approach had a few limitations—which are completely understandable, because making an addon like this is surprisingly tricky. Since Godot's @icon annotation takes a strict static path and doesn't accept dynamic parameters, it creates a massive roadblock for user-friendly customization. This addon is an attempt to solve that problem.
 Contributing & Support
 
-    - Contributions: Found a bug or have an improvement? Feel free to open an Issue or submit a Pull Request!
+- Contributions: Found a bug or have an improvement? Feel free to open an Issue or submit a Pull Request!
 
-    - Support: Check out my other open-source tools and projects at [Mold House](https://github.com/MoldyHouse).
+- Support: Check out my other open-source tools and projects at [Mold House](https://github.com/MoldyHouse).
 
 ## License
 
