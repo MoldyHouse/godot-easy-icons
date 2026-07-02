@@ -69,7 +69,8 @@ public partial class MyNode : Node
 ## Inspiration
 
 This project was heavily inspired by @voxybuns' work on @icons. His approach had a few limitations, which are completely understandable, because making an addon like this is surprisingly tricky. Since Godot's @icon annotation takes a strict static path and doesn't accept dynamic parameters, it creates a massive roadblock for user-friendly customization. This addon is an attempt to solve that problem.
-Contributing & Support
+
+## Contributing & Support
 
 - Contributions: Found a bug or have an improvement? Feel free to open an Issue or submit a Pull Request!
 
