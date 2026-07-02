@@ -330,7 +330,7 @@ func _on_icon_chosen(
 	_pending_node = null
 	_pending_attach_script = false
 
-	_finalize_after_icon_apply(script_path, icon_path)
+	await _finalize_after_icon_apply(script_path, icon_path)
 	await _reload_current_saved_scene()
 
 	print("Icon applied to node: ", node_name)

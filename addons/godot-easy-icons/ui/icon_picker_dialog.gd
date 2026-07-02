@@ -43,7 +43,7 @@ var _add_to_project_button: Button
 
 func _ready() -> void:
 	title = "Add Icon"
-	min_size = Vector2i(760, 560)
+	min_size = Vector2i(560, 360)
 
 	confirmed.connect(_on_confirmed)
 
@@ -52,14 +52,10 @@ func _ready() -> void:
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(panel)
 
-	var margin_c = MarginContainer.new()
-	margin_c.add_theme_constant_override("margin_*", 24)
-	panel.add_child(margin_c)
-
 	var root := VBoxContainer.new()
 	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	margin_c.add_child(root)
+	panel.add_child(root)
 
 	_info_label = Label.new()
 	_info_label.text = "Choose an icon and color."
