@@ -1,32 +1,40 @@
 # Godot Easy Icons
 
+Adding custom icons to your Godot editor nodes, made easy.
+
 ## Demo
 
 | | |
 | :---: | :---: |
-| <img src="https://github.com/user-attachments/assets/a6ab7da6-d3f9-44e2-9cb8-ed2cf8b3d590" width="100%" alt="screenshot 1"/> | <img src="https://github.com/user-attachments/assets/f61a1c88-b6b1-4e38-b403-ab8737c7a18e" width="100%" alt="screenshot 2"/> |
-| <img src="https://github.com/user-attachments/assets/3a4aa37b-2e9b-437b-9736-99970c2acfd5" width="100%" alt="screenshot 3"/> | <img src="https://github.com/user-attachments/assets/4b5f32b1-9ed4-4ebd-b07a-699d584130cd" width="100%" alt="screenshot 4"/> |
+|  |  |
+|  |  |
 
 
-> You can use `F3` and `Ctrl + .` as shortcut.
+> **Tip** You can use `F3` and `Ctrl + .` as shortcut.
 
 ## Installation
 
-Download it via [Asset Store](https://store.godotengine.org/asset/fellow-roach/godot-easy-icons/) or clone this repository and add the addon folder to yout project
+*   **Asset Library:** Download it directly via the [Godot Asset Library](https://store.godotengine.org/asset/fellow-roach/godot-easy-icons/).
+*   **Manual:** Clone this repository and drop the `addons/` folder into your project directory.
 
-## Art Styles Options
+---
 
-- [Pixelated](https://github.com/halfmage/pixelarticons) by @halfmage
-- [@icons](https://github.com/Voxybuns/at-icons) by @voxybuns
-- [Streamline](https://www.streamlinehq.com/icons/core-solid-free) by (guest what) streamline
+## Icon Styles Included
 
-I'm providing a few icons packs in `/icons`, they are very distint in style, and you should pick which one you are going to use, remember that you can always
-come back here to get the other icons if you deleted, in fact, I encourage you to delete the icons that you are not going to use, as it takes time to load them and
-to recalculate the colors of the current ones in use (they change if theme changes).
+The repository includes a few distinct icon packs inside the `/icons` folder:
+
+*   [Pixelated](https://github.com/halfmage/pixelarticons) by @halfmage
+*   [@icons](https://github.com/Voxybuns/at-icons) by @voxybuns
+*   [Streamline Core](https://www.streamlinehq.com/icons/core-solid-free) by Streamline
+
+### ⚠️ Performance & Style Note
+I highly recommend deleting the icon packs you don't plan on using. Better for project coherence and keeping them all increases project load times, as the addon recalculates icon colors whenever your Godot editor theme changes. Don't worry about losing them—you can always grab them from this repo later.
+
+---
 
 ## Custom Node Icons
 
-This tool allow you to add icons easily to GDscript nodes as well as C# nodes.
+This tool allows you to easily assign icons to both GDScript and C# nodes.
 
 **GDScript:**
 ```gdscript
@@ -46,22 +54,22 @@ public partial class MyNode : Node
 }
 ```
 
-## Customization
+# Using Your Own Icons
 
-If you have your own icons, and want to use this tool with your it, just remove all icons and add your in the icons folder, please, use monochromatic icons, this tool is mostly for UI elements, but if the tool gets traction maybe someone can help me solving this.
+If you want to use this tool with your own custom asset library, simply clear out the default files in the icons folder and drop your own in.
 
-## Contributing
+> Note: For the best results, please use monochromatic icons. The color-shifting feature is tailored for UI elements. If the project gets enough traction, expanding support for multi-colored icons is definitely on the table!
 
-Feel free to send your Issue/PR
 
-## Support the project
+# Inspiration
 
-Checkout my other open source content at [Mold House](https://github.com/MoldyHouse)
+This project was heavily inspired by @voxybuns' work on @icons. His approach had a few limitations—which are completely understandable, because making an addon like this is surprisingly tricky. Since Godot's @icon annotation takes a strict static path and doesn't accept dynamic parameters, it creates a massive roadblock for user-friendly customization. This addon is an attempt to solve that problem.
+Contributing & Support
 
-## Inspiration
+    - Contributions: Found a bug or have an improvement? Feel free to open an Issue or submit a Pull Request!
 
-I really liked @voxybuns work on the icons, but his approach had huge flaw, that are completely understantable, making this addon was way harder than I thought it would, because as @icon uses a direct path, doesn't receive any other params, it basically causes a huge blocker for user friendly customizations.
+    - Support: Check out my other open-source tools and projects at [Mold House](https://github.com/MoldyHouse).
 
-## License
+# License
 
-**Godot Easy Icons** is licensed under the MIT license. See [LICENSE](LICENSE).
+Godot Easy Icons is licensed under the MIT license. See [LICENSE](./LICENSE) for details.
